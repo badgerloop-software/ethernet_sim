@@ -6,7 +6,7 @@ import struct
 import time
 
 DRIVER_IO_IP = '127.0.0.1'
-DRIVER_IO_PORT = 4001
+DRIVER_IO_PORT = 8000
 file_format = 'sc1-data-format/format.json'
 
 types = {'bool': '?', 'float': 'f', 'char': 'c', 'uint8': 'B', 'uint16': 'H', 'uint64': 'Q'}
@@ -27,7 +27,10 @@ def gen_data():
             case 'bool':
                 data.append(random.getrandbits(1))
             case 'float':
-                data.append(random.random() * 100)
+                if key == 'accelerator':
+                    data.append(random.random())
+                else:
+                    data.append(random.random() * 100)
             case 'uint8':
                 if key == 'tstamp_sc':
                     data.append(t.tm_sec)
@@ -43,7 +46,6 @@ def gen_data():
                 data.append(int(time.mktime(t)))
             case 'char':
                 data.append(bytes(random.choice(string.ascii_letters), 'ascii'))
-    print(data)
     return struct.pack(format_string, *data)
 
 if __name__ == '__main__':
@@ -59,7 +61,7 @@ if __name__ == '__main__':
                 d = gen_data()
                 d = b'<bsr>' + d + b'</bsr>'
                 client.send(d)
-                print(d)
                 time.sleep(0.1)
         except Exception as e:
+            print("disconnected")
             continue
