@@ -4,6 +4,7 @@ import socket
 import string
 import struct
 import time
+import traceback
 
 DRIVER_IO_IP = '127.0.0.1'
 DRIVER_IO_PORT = 8000
@@ -17,8 +18,11 @@ with open(file_format, 'r') as f:
 for k in data_format.keys():
     format_string += types[data_format[k][1]]
 
+gps_data = json.load(open('gps_dataset/dataset1.json', 'r'))['data']
+gps_data_index = 0
 
 def gen_data():
+    global gps_data_index
     data = []
     for key in data_format.keys():
         d = data_format[key]
@@ -29,6 +33,13 @@ def gen_data():
             case 'float':
                 if key == 'accelerator':
                     data.append(random.random())
+                elif key == 'lat':
+                    data.append(gps_data[gps_data_index]['latitude'])
+                elif key == 'lon':
+                    data.append(gps_data[gps_data_index]['longitude'])
+                elif key == 'elev':
+                    data.append(gps_data[gps_data_index]['elevation'])
+                    print(gps_data[gps_data_index]['elevation'])
                 else:
                     data.append(random.random() * 100)
             case 'uint8':
@@ -46,6 +57,7 @@ def gen_data():
                 data.append(int(time.mktime(t)))
             case 'char':
                 data.append(bytes(random.choice(string.ascii_letters), 'ascii'))
+    gps_data_index = (gps_data_index + 1) % len(gps_data)
     return struct.pack(format_string, *data)
 
 if __name__ == '__main__':
@@ -63,5 +75,6 @@ if __name__ == '__main__':
                 client.send(d)
                 time.sleep(0.1)
         except Exception as e:
+            traceback.print_exc()
             print("disconnected")
             continue
